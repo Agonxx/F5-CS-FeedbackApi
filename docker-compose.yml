@@ -1,0 +1,40 @@
+services:
+
+  feedbackapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: feedbackapi
+    ports:
+      - "5004:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__FeedbackDB=mongodb://mongodb:27017
+      - MongoDB__Database=FeedbackDB
+      - JwtSettings__SecretKey=troque-esta-chave-em-producao-conexao-solidaria-2026
+      # CampanhasApi rodando no host (docker compose da CampanhasApi, porta 5002)
+      - CampanhasApi__BaseUrl=http://host.docker.internal:5002/
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - conexao-solidaria-network
+
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - conexao-solidaria-network
+
+networks:
+  conexao-solidaria-network:
+    driver: bridge
